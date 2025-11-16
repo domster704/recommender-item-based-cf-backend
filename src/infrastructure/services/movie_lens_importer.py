@@ -38,7 +38,7 @@ class MovieLensImporter:
         if await repo.get_all():
             return
 
-        with open(self.genre_file, "r") as f:
+        with open(self.genre_file, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="|")
 
             for name, id_value in reader:
@@ -55,7 +55,7 @@ class MovieLensImporter:
         if await repo.get_all():
             return
 
-        with open(self.occupation_file, "r") as f:
+        with open(self.occupation_file, "r", encoding="utf-8") as f:
             for idx, line in enumerate(f):
                 name = line.strip()
                 occupation = Occupation(id=idx, name=name)
@@ -69,7 +69,7 @@ class MovieLensImporter:
         if await user_repo.get_all():
             return
 
-        with open(self.user_file, "r") as f:
+        with open(self.user_file, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="|")
 
             for row in reader:
@@ -98,7 +98,7 @@ class MovieLensImporter:
 
         genres = await GenreRepository(uow).get_all()
 
-        with open(self.movie_file, "r", encoding="latin-1") as f:
+        with open(self.movie_file, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="|")
 
             for row in reader:
@@ -156,7 +156,7 @@ class MovieLensImporter:
         movies = await movie_repo.get_all()
         movies_map = {m.id: m for m in movies}
 
-        with open(self.rating_file, "r") as f:
+        with open(self.rating_file, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="\t")
 
             for user_id, movie_id, rating, timestamp in reader:
