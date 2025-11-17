@@ -4,11 +4,11 @@ from src.application.providers.uow import uow_context
 from src.application.usecase.recommender.recommender_builder import (
     RecommenderBuilderUseCase,
 )
-from src.infrastructure.services.recommender.item_based_cf_recommender import (
-    ItemBasedCFRecommender,
-)
 from src.infrastructure.repositories.movie import MovieRepository
 from src.infrastructure.repositories.rating import RatingRepository
+from src.infrastructure.services.recommender_module.recommender_service import (
+    RecommenderService,
+)
 from src.infrastructure.services.similarity_cache import PickleSimilarityCache
 
 BASE_DIR = Path(__file__).resolve().parents[3]
@@ -25,5 +25,5 @@ async def recommender_builder() -> RecommenderBuilderUseCase:
     return RecommenderBuilderUseCase(
         rating_repository=rating_repository,
         movie_repository=movie_repository,
-        recommender=ItemBasedCFRecommender(cache=cache),
+        recommender=RecommenderService(cache=cache),
     )

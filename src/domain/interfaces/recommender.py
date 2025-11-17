@@ -5,27 +5,6 @@ from src.domain.entities.movie_lens.raitings import Rating
 
 
 class IRecommender(Protocol):
-    async def build(
-        self,
-        ratings_loader: Callable[[], Awaitable[list[Rating]]],
-        movies_loader: Callable[[], Awaitable[list[Movie]]],
-    ) -> None:
-        """
-        Формирует внутреннюю модель рекомендаций на основе переданных данных.
-
-        Метод загружает данные через переданные загрузчики, заполняет структуру
-        пользовательских рейтингов и формирует матрицу сходства фильмов.
-        Если доступен кеш, данные читаются из него и сохраняются после расчёта
-
-        Args:
-            ratings_loader: Асинхронная функция, возвращающая список всех рейтингов
-            movies_loader: Асинхронная функция, возвращающая список всех фильмов
-
-        Returns:
-            None
-        """
-        ...
-
     async def recommend_for_user(self, user_id: int, top_n: int = 10) -> list[int]:
         """
         Формирует рекомендации для пользователя
@@ -49,6 +28,29 @@ class IRecommender(Protocol):
 
         Args:
             rating (Rating): Новый или обновлённый рейтинг
+
+        Returns:
+            None
+        """
+        ...
+
+
+class IRecommenderBuilder(Protocol):
+    async def build(
+        self,
+        ratings_loader: Callable[[], Awaitable[list[Rating]]],
+        movies_loader: Callable[[], Awaitable[list[Movie]]],
+    ) -> IRecommender:
+        """
+        Формирует внутреннюю модель рекомендаций на основе переданных данных.
+
+        Метод загружает данные через переданные загрузчики, заполняет структуру
+        пользовательских рейтингов и формирует матрицу сходства фильмов.
+        Если доступен кеш, данные читаются из него и сохраняются после расчёта
+
+        Args:
+            ratings_loader: Асинхронная функция, возвращающая список всех рейтингов
+            movies_loader: Асинхронная функция, возвращающая список всех фильмов
 
         Returns:
             None
