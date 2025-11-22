@@ -1,9 +1,6 @@
 import csv
-import re
 from datetime import datetime
 from pathlib import Path
-
-import pandas as pd
 
 from src.domain.entities.movie_lens.genre import Genre
 from src.domain.entities.movie_lens.movie import Movie

@@ -4,7 +4,7 @@ from fastapi.params import Depends
 from src.domain.interfaces.recommender import IRecommender
 from src.presentation.dependencies.recommender.get_recommender import get_recommender
 
-recommendations_router = APIRouter(prefix="/recommendations")
+recommendations_router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
 
 @recommendations_router.get("/{user_id}")

@@ -9,4 +9,4 @@ class Rating:
     user: User
     movie: Movie
     rating: int
-    timestamp: int
+    timestamp: int | None

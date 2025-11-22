@@ -11,7 +11,8 @@ class UserGender(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class User:
-    id: int
+    id: int | None
     age: int
     gender: UserGender
-    occupation: Occupation
+    occupation: Occupation | None
+    tg_user_id: int | None = None

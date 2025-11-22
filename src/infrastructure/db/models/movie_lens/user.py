@@ -13,9 +13,10 @@ class UserORM(BaseORM, table=True):
     id: int | None = Field(default=None, primary_key=True)
     age: int
     gender: UserGender = Field(max_length=1)
-    occupation_id: int = Field(foreign_key="occupation.id")
+    occupation_id: int | None = Field(foreign_key="occupation.id", nullable=True)
+    tg_user_id: int | None = Field(unique=True, nullable=True)
 
-    occupation: "OccupationORM" = Relationship(
+    occupation: "OccupationORM | None" = Relationship(
         sa_relationship=relationship(
             "OccupationORM", back_populates="users", lazy="selectin"
         )
@@ -35,7 +36,7 @@ class UserORM(BaseORM, table=True):
             id=self.id,
             age=self.age,
             gender=self.gender,
-            occupation=self.occupation.to_entity(),
+            occupation=self.occupation.to_entity() if self.occupation else None,
         )
 
     @classmethod
@@ -44,5 +45,5 @@ class UserORM(BaseORM, table=True):
             id=entity.id,
             age=entity.age,
             gender=entity.gender,
-            occupation_id=entity.occupation.id,
+            occupation_id=entity.occupation.id if entity.occupation else None,
         )

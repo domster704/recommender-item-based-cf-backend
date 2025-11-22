@@ -14,7 +14,7 @@ class RatingORM(BaseORM, table=True):
     user_id: int = Field(foreign_key="user.id")
     movie_id: int = Field(foreign_key="movie.id")
     rating: int
-    timestamp: int
+    timestamp: int | None = Field(default=None, nullable=True)
 
     user: "UserORM" = Relationship(
         sa_relationship=relationship(
