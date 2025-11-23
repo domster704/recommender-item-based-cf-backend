@@ -37,6 +37,7 @@ class UserORM(BaseORM, table=True):
             age=self.age,
             gender=self.gender,
             occupation=self.occupation.to_entity() if self.occupation else None,
+            tg_user_id=self.tg_user_id,
         )
 
     @classmethod
@@ -46,4 +47,5 @@ class UserORM(BaseORM, table=True):
             age=entity.age,
             gender=entity.gender,
             occupation_id=entity.occupation.id if entity.occupation else None,
+            tg_user_id=entity.tg_user_id,
         )

@@ -20,10 +20,11 @@ async def get_all_users(
 
 @users_router.get("/{tg_user_id}")
 async def get_user(
-    tg_user_id: str,
+    tg_user_id: int,
     use_case: UsersGetUseCase = Depends(get_user_get_use_case),
 ):
-    return await use_case.get_by_id(int(tg_user_id))
+    res = await use_case.get_by_tg_user_id(tg_user_id)
+    return res
 
 
 @users_router.post("/")
@@ -31,12 +32,13 @@ async def get_user_by_tg_user_id(
     user: UserCreateBody,
     use_case: UserCreateUseCase = Depends(get_user_create_use_case),
 ):
+    print(user)
     return await use_case.execute(
         User(
             id=None,
             age=user.age,
             gender=user.gender,
-            occupation=None,
+            occupation=user.occupation,
             tg_user_id=user.tg_user_id,
         )
     )
