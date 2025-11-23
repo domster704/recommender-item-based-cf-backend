@@ -9,7 +9,6 @@ from src.application.usecase.movie_lens.movie_lens_import import MovieLensImport
 from src.application.usecase.recommender.recommender_builder import (
     RecommenderBuilderUseCase,
 )
-from src.domain.interfaces.recommender import IRecommender
 from src.infrastructure.db.db import init_db
 from src.presentation.api.router_v1 import api_v1_router
 from src.presentation.dependencies.movie_lens.movie_lens_impot import (

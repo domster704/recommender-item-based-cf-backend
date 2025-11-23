@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 
 from src.domain.entities.movie_lens.raitings import Rating
@@ -8,6 +9,7 @@ from src.infrastructure.services.recommender_module.similarity.cosine import (
 from src.infrastructure.services.recommender_module.storage.ratings_storage import (
     RatingsStorage,
 )
+from src.infrastructure.services.similarity_cache import PickleSimilarityCache
 
 
 class ItemBasedCFRecommender(IRecommender):
@@ -21,15 +23,18 @@ class ItemBasedCFRecommender(IRecommender):
         self,
         similarity_matrix: dict[int, dict[int, float]],
         ratings_storage: RatingsStorage,
+        cache: PickleSimilarityCache | None = None,
     ) -> None:
         """
         Args:
             similarity_matrix: Матрица сходства фильмов вида
                 {movie_id: {other_movie_id: similarity}}
             ratings_storage: Хранилище пользовательских рейтингов
+            cache: Кэш для хранения матрицы сходства фильмов
         """
         self.similarity: dict[int, dict[int, float]] = similarity_matrix
         self.storage: RatingsStorage = ratings_storage
+        self.cache = cache
 
     async def recommend_for_user(self, user_id: int, top_n: int = 10) -> list[int]:
         user_movies: dict[int, int] = self.storage.get_user_movies(user_id)
@@ -77,3 +82,11 @@ class ItemBasedCFRecommender(IRecommender):
             else:
                 self.similarity[movie_id].pop(other_id, None)
                 self.similarity[other_id].pop(movie_id, None)
+
+        if self.cache:
+            asyncio.create_task(
+                self.cache.save({
+                    "user_ratings": self.storage.users,
+                    "similarity_matrix": self.similarity
+                })
+            )

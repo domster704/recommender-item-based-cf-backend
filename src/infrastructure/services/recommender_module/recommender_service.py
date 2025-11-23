@@ -56,4 +56,4 @@ class RecommenderService(IRecommenderBuilder):
                     {"user_ratings": storage.users, "similarity_matrix": sim_matrix}
                 )
 
-        return ItemBasedCFRecommender(sim_matrix, storage)
+        return ItemBasedCFRecommender(sim_matrix, storage, self.cache)
