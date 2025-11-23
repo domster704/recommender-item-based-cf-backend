@@ -85,8 +85,10 @@ class ItemBasedCFRecommender(IRecommender):
 
         if self.cache:
             asyncio.create_task(
-                self.cache.save({
-                    "user_ratings": self.storage.users,
-                    "similarity_matrix": self.similarity
-                })
+                self.cache.save(
+                    {
+                        "user_ratings": self.storage.users,
+                        "similarity_matrix": self.similarity,
+                    }
+                )
             )

@@ -11,5 +11,5 @@ def get_rating_create_use_case(uow=Depends(uow_provider)) -> RatingCreateUseCase
     return RatingCreateUseCase(
         rating_repository=RatingRepository(uow),
         movie_repository=MovieRepository(uow),
-        user_repository=UserRepository(uow)
+        user_repository=UserRepository(uow),
     )

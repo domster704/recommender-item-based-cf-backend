@@ -16,3 +16,9 @@ class MoviesGetUseCase:
             return await self.movie_repository.get(movie_id, field_search="id")
         except RepositoryError as e:
             return None
+
+    async def get_by_ids(self, ids: list[int]) -> list[Movie]:
+        try:
+            return await self.movie_repository.get_all_by_ids(ids)
+        except RepositoryError as e:
+            return []

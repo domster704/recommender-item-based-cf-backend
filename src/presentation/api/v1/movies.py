@@ -12,9 +12,10 @@ async def get_all_movies(
 ):
     return await use_case.get_all()
 
+
 @movies_router.get("/{movie_id}")
 async def get_movie_by_ud(
-        movie_id: int,
-        use_case: MoviesGetUseCase = Depends(get_movies_use_case),
+    movie_id: int,
+    use_case: MoviesGetUseCase = Depends(get_movies_use_case),
 ):
     return await use_case.get_by_id(movie_id)

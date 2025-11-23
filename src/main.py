@@ -9,6 +9,7 @@ from src.application.usecase.movie_lens.movie_lens_import import MovieLensImport
 from src.application.usecase.recommender.recommender_builder import (
     RecommenderBuilderUseCase,
 )
+from src.domain.interfaces.recommender import IRecommender
 from src.infrastructure.db.db import init_db
 from src.presentation.api.router_v1 import api_v1_router
 from src.presentation.dependencies.movie_lens.movie_lens_impot import (
@@ -34,7 +35,7 @@ async def lifespan(app: FastAPI):
     recommender_builder_use_case: RecommenderBuilderUseCase = (
         await recommender_builder()
     )
-    recommender = await recommender_builder_use_case.execute()
+    recommender: IRecommender = await recommender_builder_use_case.execute()
 
     # TEST
     test_result = await recommender.recommend_for_user(-1, 5)
