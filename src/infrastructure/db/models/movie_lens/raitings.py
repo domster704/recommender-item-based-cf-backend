@@ -30,6 +30,7 @@ class RatingORM(BaseORM, table=True):
 
     def to_entity(self) -> Rating:
         return Rating(
+            id=self.id,
             user=self.user.to_entity(),
             movie=self.movie.to_entity(),
             rating=self.rating,
@@ -39,6 +40,7 @@ class RatingORM(BaseORM, table=True):
     @classmethod
     def from_entity(cls, entity: Rating) -> RatingORM:
         return cls(
+            id=entity.id,
             user_id=entity.user.id,
             movie_id=entity.movie.id,
             rating=entity.rating,

@@ -3,6 +3,7 @@ from src.domain.entities.movie_lens.raitings import Rating
 from src.domain.entities.movie_lens.user import User
 from src.domain.repositories.base import RepositoryInterface
 from src.infrastructure.exceptions.repository import RepositoryError
+from src.infrastructure.repositories.rating import RatingRepository
 
 
 class RatingCreateUseCase:
@@ -10,7 +11,7 @@ class RatingCreateUseCase:
             self,
             user_repository: RepositoryInterface[User],
             movie_repository: RepositoryInterface[Movie],
-            rating_repository: RepositoryInterface[Rating]
+            rating_repository: RatingRepository
     ):
         self.rating_repository = rating_repository
         self.movie_repository = movie_repository
@@ -23,6 +24,21 @@ class RatingCreateUseCase:
 
             if user is None or movie is None:
                 raise RepositoryError("User or movie not found")
+
+            existing = await self.rating_repository.get_by_user_and_movie(
+                user_id=user.id,
+                movie_id=movie.id
+            )
+
+            if existing:
+                new_rating = Rating(
+                    id=existing.id,
+                    user=existing.user,
+                    movie=existing.movie,
+                    rating=rating,
+                    timestamp=None
+                )
+                return await self.rating_repository.update(new_rating)
 
             return await self.rating_repository.add(Rating(
                 user=user,
