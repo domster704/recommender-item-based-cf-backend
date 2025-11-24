@@ -7,6 +7,6 @@ class MovieLensImportUseCase:
     def __init__(self):
         pass
 
-    async def execute(self, movie_lens_path: Path):
+    async def execute(self, movie_lens_path: Path) -> None:
         service = MovieLensImporter(movie_lens_path)
         await service.import_all()

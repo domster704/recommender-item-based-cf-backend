@@ -32,7 +32,6 @@ async def get_user_by_tg_user_id(
     user: UserCreateBody,
     use_case: UserCreateUseCase = Depends(get_user_create_use_case),
 ):
-    print(user)
     return await use_case.execute(
         User(
             id=None,

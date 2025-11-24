@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+from typing import Callable
 
 from src.domain.entities.movie_lens.raitings import Rating
 from src.domain.interfaces.recommender import IRecommender
@@ -24,6 +25,9 @@ class ItemBasedCFRecommender(IRecommender):
         similarity_matrix: dict[int, dict[int, float]],
         ratings_storage: RatingsStorage,
         cache: PickleSimilarityCache | None = None,
+        similarity_function: Callable[
+            [dict[int, int], dict[int, int]], float
+        ] = CosineSimilarity.calculate,
     ) -> None:
         """
         Args:
@@ -35,6 +39,7 @@ class ItemBasedCFRecommender(IRecommender):
         self.similarity: dict[int, dict[int, float]] = similarity_matrix
         self.storage: RatingsStorage = ratings_storage
         self.cache = cache
+        self.similarity_function = similarity_function
 
     async def recommend_for_user(self, user_id: int, top_n: int = 10) -> list[int]:
         user_movies: dict[int, int] = self.storage.get_user_movies(user_id)
@@ -74,7 +79,7 @@ class ItemBasedCFRecommender(IRecommender):
             vector1: dict[int, int] = self.storage.get_movie_vector(movie_id)
             vector2: dict[int, int] = self.storage.get_movie_vector(other_id)
 
-            similarity: float = CosineSimilarity.calculate(vector1, vector2)
+            similarity: float = self.similarity_function(vector1, vector2)
 
             if similarity > 0:
                 self.similarity[movie_id][other_id] = similarity

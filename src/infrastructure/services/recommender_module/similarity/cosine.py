@@ -14,13 +14,16 @@ class CosineSimilarity:
         которые оценили оба фильма
 
         Args:
-            vec1: Вектор первого фильма в формате {user_id: rating}.
-            vec2: Вектор второго фильма в формате {user_id: rating}.
+            vec1: Вектор первого фильма в формате {user_id: rating}
+            vec2: Вектор второго фильма в формате {user_id: rating}
 
         Returns:
             Значение косинусного сходства от 0.0 до 1.0.
             Возвращает 0.0, если у фильмов нет общих пользователей
-            или если хотя бы один из векторов имеет нулевую норму.
+            или если хотя бы один из векторов имеет нулевую норму
+
+        References:
+            - https://en.wikipedia.org/wiki/Item-item_collaborative_filtering
         """
         user_ids = set(vec1.keys()) & set(vec2.keys())
         if not user_ids:

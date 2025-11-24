@@ -28,7 +28,7 @@ async def add_rating(
     update_recommender: UpdateRecommenderUseCase = Depends(
         get_update_recommender_use_case
     ),
-):
+) -> Rating | None:
     new_rating = await use_case.execute(**rating.model_dump())
 
     if new_rating:
