@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     recommender: IRecommender = await recommender_builder_use_case.execute()
 
     # TEST
-    test_result = await recommender.recommend_for_user(-1, 5)
+    test_result = await recommender.recommend_for_user(944, 5)
     print(test_result)
     # END TEST
 

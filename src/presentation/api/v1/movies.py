@@ -11,7 +11,7 @@ movies_router = APIRouter(prefix="/movies", tags=["movies"])
 async def get_all_movies(
     use_case: MoviesGetUseCase = Depends(get_movies_use_case),
 ) -> list[Movie]:
-    return await use_case.get_all()
+    return await use_case.get_popular()
 
 
 @movies_router.get("/{movie_id}")

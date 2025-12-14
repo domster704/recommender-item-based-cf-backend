@@ -28,6 +28,17 @@ class DBSettings(BaseSettings):
         return f"sqlite+aiosqlite:///{self.dsn.as_posix()}"
 
 
+class SVDConfig(BaseSettings):
+    factors: int = 30
+    epochs: int = 40
+    lr: float = 0.001
+    reg: float = 0.001
+    online_lr: float = 0.001
+    online_reg: float = 0.001
+    online_steps: int = 5
+    init_std: float = 0.1
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=ROOT_DIR / ".env",
@@ -41,6 +52,9 @@ class Settings(BaseSettings):
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     db: DBSettings = Field(default_factory=DBSettings)
+    svd: SVDConfig = SVDConfig()
+
+    funk_svd_model_path: Path = ROOT_DIR / "src" / "shared" / "assets" / "funk_svd.pt"
 
 
 settings = Settings()

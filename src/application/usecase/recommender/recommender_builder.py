@@ -19,7 +19,10 @@ class RecommenderBuilderUseCase:
         ratings = self.rating_repository.get_all
         movies = self.movie_repository.get_all
 
-        recommender_service: IRecommender = await self.recommender.build(
-            ratings, movies
+        # recommender_service: IRecommender = await self.recommender.build(
+        #     ratings, movies
+        # )
+        recommender_service: IRecommender = await self.recommender.build_funk_svd(
+            ratings
         )
         return recommender_service

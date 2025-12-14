@@ -1,11 +1,15 @@
 from src.domain.entities.movie_lens.movie import Movie
 from src.domain.repositories.base import RepositoryInterface
 from src.infrastructure.exceptions.repository import RepositoryError
+from src.infrastructure.repositories.movie import MovieRepository
 
 
 class MoviesGetUseCase:
-    def __init__(self, movie_repository: RepositoryInterface[Movie]):
+    def __init__(self, movie_repository: MovieRepository):
         self.movie_repository = movie_repository
+
+    async def get_popular(self) -> list[Movie]:
+        return await self.movie_repository.get_all_ordered_by_popularity()
 
     async def get_all(self) -> list[Movie]:
         movies: list[Movie] = await self.movie_repository.get_all()

@@ -56,3 +56,13 @@ class IRecommenderBuilder(Protocol):
             None
         """
         ...
+
+    async def build_funk_svd(
+        self,
+        ratings_loader: Callable[[], Awaitable[list[Rating]]],
+        factors: int = 30,
+        epochs: int = 15,
+        learning_rate: float = 0.01,
+    ) -> IRecommender:
+        """Новый вариант – рекомендатель на основе матричного разложения FunkSVD."""
+        ...

@@ -4,6 +4,9 @@ from src.domain.entities.movie_lens.movie import Movie
 from src.domain.entities.movie_lens.raitings import Rating
 from src.domain.interfaces.recommender import IRecommenderBuilder, IRecommender
 from src.domain.interfaces.similarity_cache import ISimilarityCache
+from src.infrastructure.services.recommender_module.recommender.funk_svd.funk_svd_trainer import (
+    TorchMFTrainer,
+)
 from src.infrastructure.services.recommender_module.recommender.item_based_cf_recommender import (
     ItemBasedCFRecommender,
 )
@@ -57,3 +60,18 @@ class RecommenderService(IRecommenderBuilder):
                 )
 
         return ItemBasedCFRecommender(sim_matrix, storage, self.cache)
+
+    async def build_funk_svd(
+        self,
+        ratings_loader: Callable[[], Awaitable[list[Rating]]],
+        factors: int = 30,
+        epochs: int = 40,
+        learning_rate: float = 0.001,
+    ) -> IRecommender:
+        """Новый вариант – рекомендатель на основе матричного разложения FunkSVD."""
+        ratings = await ratings_loader()
+
+        trainer = TorchMFTrainer(factors=factors, epochs=epochs, lr=learning_rate)
+
+        recommender: IRecommender = trainer.fit(ratings)
+        return recommender

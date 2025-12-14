@@ -27,4 +27,5 @@ async def get_recommendations(
         return JSONResponse(status_code=404, content={"message": "User not found"})
 
     movie_ids: list[int] = await recommender.recommend_for_user(user.id, top_n)
+    print(movie_ids)
     return await movie_use_case.get_by_ids(movie_ids)
