@@ -65,7 +65,7 @@ class TorchMFTrainer:
         )
 
     def load_model(self) -> FunkSVDTorchRecommender:
-        """Загружает модель из файла."""
+        """Загружает модель из файла"""
         data = torch.load(settings.funk_svd_model_path, map_location=self.device)
 
         model = FunkSVDModel(
@@ -172,7 +172,7 @@ class TorchMFTrainer:
         ]
 
     def fit(self, ratings: list[Rating]) -> FunkSVDTorchRecommender:
-        # Если модель уже есть — загружаем и выходим
+        # Если модель уже есть - загружаем и выходим
         if settings.funk_svd_model_path.exists():
             return self.load_model()
 
@@ -207,79 +207,137 @@ class TorchMFTrainer:
 
     def online_update(
         self,
-        model: nn.Module,
-        rating: Rating,
+        model: nn.Module,  # ожидается FunkSVDModel
+        rating,  # Rating
         user_to_idx: dict[int, int],
         item_to_idx: dict[int, int],
+        update_item: bool = True,
     ) -> None:
-        """Онлайн-обучение: один шаг FunkSVD для одного пользователя."""
-        cfg: SVDConfig = settings.svd
+        """
+        Онлайн-обучение (адаптация под новый рейтинг).
+        По умолчанию обновляет ТОЛЬКО пользователя (p_u и b_u).
+        Опционально может обновлять ещё и фильм (q_i и b_i).
+        """
+        cfg = settings.svd
 
         user_id = rating.user.id
         movie_id = rating.movie.id
-        value = float(rating.rating)
-
-        # создаём нового пользователя, если его нет
-        if user_id not in user_to_idx:
-            self._add_new_user(model, user_id, user_to_idx)
-
-        u_idx = user_to_idx[user_id]
-        i_idx = item_to_idx[movie_id]
+        r_true_val = float(rating.rating)
 
         device = next(model.parameters()).device
 
-        u = torch.tensor([u_idx], device=device)
-        i = torch.tensor([i_idx], device=device)
-        r_true = torch.tensor([value], device=device)
+        if user_id not in user_to_idx:
+            self._add_new_user(model, user_id, user_to_idx)
 
-        model.train()
+        # фильм должен существовать
+        if movie_id not in item_to_idx:
+            return
 
-        optimizer = optim.SGD(
-            [
-                model.user_factors.weight,
-                model.user_bias.weight,
-            ],
-            lr=cfg.online_lr,
-        )
+        u_idx: int = user_to_idx[user_id]
+        i_idx: int = item_to_idx[movie_id]
 
-        loss_fn = nn.MSELoss()
+        mu = torch.tensor(float(model.global_mean), device=device)
 
-        for _ in range(cfg.online_steps):
-            optimizer.zero_grad()
+        with torch.no_grad():
+            p0 = model.user_factors.weight[u_idx].detach().clone()
+            bu0 = model.user_bias.weight[u_idx].detach().clone()
 
-            pred = model(u, i)
+            q0 = model.item_factors.weight[i_idx].detach().clone()
+            bi0 = model.item_bias.weight[i_idx].detach().clone()
 
-            p_u = model.user_factors(u)
-            q_i = model.item_factors(i)
+        p_u = nn.Parameter(p0)
+        b_u = nn.Parameter(bu0)
 
-            loss = loss_fn(pred, r_true)
-            loss += cfg.online_reg * (p_u.norm() + q_i.norm())
+        params = [p_u, b_u]
 
-            loss.backward()
-            optimizer.step()
+        if update_item:
+            q_i = nn.Parameter(q0)
+            b_i = nn.Parameter(bi0)
+            params += [q_i, b_i]
+        else:
+            q_i = q0.detach()
+            b_i = bi0.detach()
+
+        optimizer = optim.SGD(params, lr=cfg.online_lr)
+
+        r_true = torch.tensor(r_true_val, device=device)
 
         model.eval()
 
+        for _ in range(cfg.online_steps):
+            optimizer.zero_grad(set_to_none=True)
+
+            # pred = mu + b_u + b_i + p_u @ q_i
+            dot = (p_u * q_i).sum()
+            pred = mu + b_u.view(()) + b_i.view(()) + dot
+
+            err = pred - r_true
+            mse = err * err
+
+            reg = cfg.online_reg * (p_u.pow(2).sum() + b_u.pow(2).sum())
+            if update_item:
+                reg = reg + cfg.online_reg * (q_i.pow(2).sum() + b_i.pow(2).sum())
+
+            loss = mse + reg
+            loss.backward()
+            optimizer.step()
+
+        with torch.no_grad():
+            model.user_factors.weight[u_idx].copy_(p_u.data)
+            model.user_bias.weight[u_idx].copy_(b_u.data)
+
+            if update_item:
+                model.item_factors.weight[i_idx].copy_(q_i.data)
+                model.item_bias.weight[i_idx].copy_(b_i.data)
+
     def _add_new_user(self, model, user_id: int, user_to_idx: dict[int, int]) -> None:
-        new_idx = len(user_to_idx)
+        """
+        Добавляет нового пользователя корректно: расширяет nn.Embedding целиком.
+        """
+        new_idx: int = len(user_to_idx)
         user_to_idx[user_id] = new_idx
 
         device = next(model.parameters()).device
         cfg: SVDConfig = settings.svd
 
+        model.user_factors = self._expand_embedding(
+            model.user_factors,
+            n_new=1,
+            init="normal",
+            init_std=cfg.init_std,
+            device=device,
+        )
+        model.user_bias = self._expand_embedding(
+            model.user_bias,
+            n_new=1,
+            init="zeros",
+            init_std=0.0,
+            device=device,
+        )
+
+    @staticmethod
+    def _expand_embedding(
+        emb: nn.Embedding,
+        n_new: int,
+        init: str,
+        init_std: float,
+        device: torch.device,
+    ) -> nn.Embedding:
+        """
+        Возвращает новый Embedding размером (old + n_new),
+        копирует старые веса, инициализирует новые строки
+        """
+        old_n, dim = emb.weight.shape
+        new_emb = nn.Embedding(old_n + n_new, dim).to(device)
+
         with torch.no_grad():
-            new_factors = torch.normal(
-                mean=0,
-                std=cfg.init_std,
-                size=(1, model.user_factors.embedding_dim),
-                device=device,
-            )
+            new_emb.weight[:old_n].copy_(emb.weight.data)
 
-            new_bias = torch.zeros((1, 1), device=device)
+            if init == "normal":
+                new_emb.weight[old_n:].normal_(mean=0.0, std=float(init_std))
+            elif init == "zeros":
+                new_emb.weight[old_n:].zero_()
+            else:
+                raise ValueError(f"Unknown init: {init}")
 
-            model.user_factors.weight = nn.Parameter(
-                torch.cat([model.user_factors.weight, new_factors], dim=0)
-            )
-            model.user_bias.weight = nn.Parameter(
-                torch.cat([model.user_bias.weight, new_bias], dim=0)
-            )
+        return new_emb
